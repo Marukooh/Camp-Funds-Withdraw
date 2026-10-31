@@ -1,2 +1,11 @@
 build/
 *.log
+re/*.pkl
+re/__pycache__/
+re/*.txt
+dist/
+__pycache__/
+*.pyc
+# Local-only agent notes (never published)
+AGENTS.md
+CLAUDE.md

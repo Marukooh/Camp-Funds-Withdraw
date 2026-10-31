@@ -1,0 +1,62 @@
+Camp Funds Withdraw - Source-Available License (All Rights Reserved)
+
+Copyright (c) 2026 Marco Luzzaro ("Marukoh"). All rights reserved.
+
+This repository and everything in it (source code, scripts, tools, documentation, notes, data,
+build files and compiled binaries; together, the "Software") is the exclusive property of the
+copyright holder. The Software is published for transparency and to receive contributions. It is
+NOT open source.
+
+1. What you may do
+   a. View and read the Software on the hosting platform where the copyright holder publishes it.
+   b. Fork the repository on that platform, only to the extent the platform's terms of service
+      require, and only to prepare a contribution (pull request) to this repository.
+   c. Submit contributions (issues, pull requests, patches) under section 3.
+   d. Download official release builds published by the copyright holder (on the official Nexus
+      Mods page or this repository's official releases) and use them unmodified, for personal,
+      non-commercial play of the game.
+
+2. What you may not do
+   Except as expressly allowed in section 1, you may not, in whole or in part, in any form or
+   medium, and whether or not for profit:
+   a. copy, reproduce, mirror or re-upload the Software;
+   b. modify, adapt, translate, port or create derivative works of the Software, including by
+      copying, translating or closely paraphrasing its code, byte signatures or documentation text
+      into another project;
+   c. distribute, publish, sublicense, sell, rent or otherwise make the Software or any derivative
+      available to others, including inside mod packs, mod managers, collections or other mods;
+   d. use the Software's code, binaries or documentation text, in whole or in part, in or for any
+      other project, product or service;
+   e. remove or alter this license or any copyright notice.
+
+3. Contributions
+   By submitting a contribution (code, documentation, data or any other material) to this
+   repository, you confirm that you have the right to do so and you grant the copyright holder a
+   perpetual, worldwide, irrevocable, royalty-free, non-exclusive license, with the right to
+   sublicense, to use, copy, modify, publish, distribute and relicense your contribution as part of
+   the Software or otherwise, without any obligation to you. Your contribution does not give you
+   any further right to the Software. The copyright holder may accept, change or reject any
+   contribution at their sole discretion.
+
+4. Scope
+   This license covers the copyright-protected expression of the Software (its code, binaries and
+   texts). It does not claim ownership of facts about the game (such as addresses, data layouts or
+   file formats), nor does it limit rights that applicable law grants regardless of any license
+   (for example decompilation for interoperability). Third-party credits are listed in NOTICE.md.
+
+5. No other rights
+   No right, license or interest is granted by implication, estoppel or otherwise, except as
+   expressly stated above. Any use not expressly permitted requires the prior written permission
+   of the copyright holder. Any breach of this license ends all rights granted to you under it.
+
+6. Game and third-party material
+   Crimson Desert and its files are property of Pearl Abyss. This repository does not contain or
+   grant any right to game files. Names of third-party products are used only to describe
+   compatibility.
+
+7. Disclaimer
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
+   NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+   NON-INFRINGEMENT. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+   CONNECTION WITH THE SOFTWARE OR ITS USE, INCLUDING LOSS OF SAVE DATA.
