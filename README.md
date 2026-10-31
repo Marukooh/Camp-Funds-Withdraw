@@ -83,6 +83,11 @@ Needs `mingw-w64` (`x86_64-w64-mingw32-g++`). Run `./build.sh` (plugin and offli
 or `tools/package.sh` (`dist/` with the ASI and INI). Every push is built by
 [GitHub Actions](.github/workflows/build.yml).
 
+## Also by me
+[Custom Artifact Challenges Difficulty](https://www.nexusmods.com/crimsondesert/mods/3370): choose how
+forgiving or demanding the Artifact Challenges are, with four presets (Cheat, Easy, Moderate, Hard)
+for timers, counts and distance requirements, including Charting the Unknown.
+
 ## Contributing
 Bug reports, compatibility notes for new game versions and pull requests are welcome: see
 [CONTRIBUTING.md](CONTRIBUTING.md).

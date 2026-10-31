@@ -56,5 +56,10 @@ To uninstall, disable it in DMM or delete the two files. Your save is not change
 
 [line]
 
+[size=4][color=#D4A64A][b]Also by me[/b][/color][/size]
+[size=3][color=#D4D4D8][url=https://www.nexusmods.com/crimsondesert/mods/3370][b]Custom Artifact Challenges Difficulty[/b][/url]  -  choose how forgiving or demanding the Artifact Challenges are, with four presets (Cheat, Easy, Moderate, Hard) for timers, counts and distance requirements, including Charting the Unknown.[/color][/size]
+
+[line]
+
 [center][size=3][color=#A1A1AA]Source code (read-only, contributions welcome): [url=https://github.com/Marukooh/Camp-Funds-Withdraw]github.com/Marukooh/Camp-Funds-Withdraw[/url]
 Crimson Desert is a trademark of Pearl Abyss. Unofficial fan-made mod.[/color][/size][/center]
