@@ -1,0 +1,18 @@
+name: New game version
+description: The mod says "game version not supported" after a Crimson Desert update
+labels: [game-update]
+body:
+  - type: input
+    id: game
+    attributes:
+      label: New game version
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: bin64/CampFundsWithdraw.log
+      description: The "signature missing" line tells which part changed
+      render: text
+    validations:
+      required: true

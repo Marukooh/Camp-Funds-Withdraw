@@ -1,0 +1,110 @@
+name: Release
+
+run-name: Release ${{ inputs.version }}${{ inputs.publish_nexus && ' (GitHub + Nexus Mods)' || ' (GitHub only)' }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Mod version, must match MOD_VERSION in src/main.cpp (e.g. 0.2.1)
+        required: true
+        type: string
+      changelog:
+        description: One-line changelog (GitHub release notes and Nexus file description)
+        required: true
+        type: string
+      publish_nexus:
+        description: Also upload the file to Nexus Mods
+        required: true
+        default: false
+        type: boolean
+      archive_existing_version:
+        description: Archive the file version currently published on Nexus Mods
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Build, release and upload
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: nexusmods
+    env:
+      VERSION: ${{ inputs.version }}
+      ZIP: Withdraw Camp Funds v${{ inputs.version }}.zip
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - name: Check version
+        run: |
+          set -euo pipefail
+          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "version must look like 1.2.3" >&2; exit 1; }
+          grep -q "#define MOD_VERSION \"$VERSION\"" src/main.cpp || { echo "MOD_VERSION in src/main.cpp is not $VERSION" >&2; exit 1; }
+          if git ls-remote --exit-code --tags origin "v$VERSION" >/dev/null; then echo "tag v$VERSION already exists" >&2; exit 1; fi
+
+      - name: Check Nexus Mods configuration
+        if: inputs.publish_nexus
+        env:
+          NEXUSMODS_API_KEY: ${{ secrets.NEXUSMODS_API_KEY }}
+          NEXUSMODS_FILE_ID: ${{ vars.NEXUSMODS_FILE_ID }}
+        run: |
+          set -euo pipefail
+          test -n "$NEXUSMODS_API_KEY" || { echo 'Missing NEXUSMODS_API_KEY secret (environment "nexusmods").' >&2; exit 1; }
+          [[ "$NEXUSMODS_FILE_ID" =~ ^[0-9]+$ ]] || { echo 'Missing or non-numeric NEXUSMODS_FILE_ID variable.' >&2; exit 1; }
+
+      - name: Install mingw-w64
+        run: sudo apt-get update -q && sudo apt-get install -y -q g++-mingw-w64-x86-64 zip
+
+      - name: Build and package
+        run: |
+          set -euo pipefail
+          ./tools/package.sh
+          (cd dist && zip -q -X "../$ZIP" CampFundsWithdraw.asi CampFundsWithdraw.ini)
+          unzip -l "$ZIP"
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CHANGELOG: ${{ inputs.changelog }}
+        run: |
+          set -euo pipefail
+          printf '%s\n\nFor Crimson Desert 2.04.03. Install with DMM 4.5.1+ (ASI mod) or copy both files into `bin64/`. Linux/Steam Deck: add `winmm=n,b` to WINEDLLOVERRIDES.\n' "$CHANGELOG" > notes.md
+          gh release create "v$VERSION" "$ZIP" --title "Withdraw Camp Funds $VERSION" --notes-file notes.md --target "$GITHUB_SHA"
+
+      - name: Upload to Nexus Mods
+        id: nexus-upload
+        if: inputs.publish_nexus
+        uses: Nexus-Mods/upload-action@c96019556046053aa26044b44396cd38929daf23 # v1.0.0-beta.10
+        with:
+          api_key: ${{ secrets.NEXUSMODS_API_KEY }}
+          file_id: ${{ vars.NEXUSMODS_FILE_ID }}
+          filename: ${{ env.ZIP }}
+          version: ${{ inputs.version }}
+          display_name: Withdraw Camp Funds
+          description: ${{ inputs.changelog }}
+          category: main
+          archive_existing_version: ${{ inputs.archive_existing_version }}
+          primary_mod_manager_download: true
+          allow_mod_manager_download: true
+          show_requirements_pop_up: false
+          update_mod_version: true
+
+      - name: Write summary
+        run: |
+          {
+            echo '## Release'
+            echo
+            echo "- Version: \`$VERSION\`"
+            echo "- GitHub release: https://github.com/${{ github.repository }}/releases/tag/v$VERSION"
+            echo "- Nexus Mods upload: \`${{ inputs.publish_nexus }}\`"
+            echo "- Nexus file version ID: \`${{ steps.nexus-upload.outputs.version_id }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"

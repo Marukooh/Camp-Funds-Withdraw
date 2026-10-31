@@ -1,0 +1,45 @@
+name: Bug report
+description: Something doesn't work in game
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for the report! Please attach the log, it's the fastest way to find the problem.
+  - type: input
+    id: game
+    attributes:
+      label: Game version
+      description: Shown in the game's main menu (e.g. 2.04.03)
+    validations:
+      required: true
+  - type: input
+    id: mod
+    attributes:
+      label: Mod version
+      description: First line of bin64/CampFundsWithdraw.log
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options: [Windows, Linux (Proton), Steam Deck]
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: bin64/CampFundsWithdraw.log
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: mods
+    attributes:
+      label: Other mods (ASI plugins and DMM mods)

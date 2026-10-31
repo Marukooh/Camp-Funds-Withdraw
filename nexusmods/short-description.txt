@@ -1,0 +1,1 @@
+Adds a Withdraw Camp Funds option to Carl's menu at the Greymane Camp: turn Camp Funds back into silver at the inverse of the game's own donation rate (10 Camp Funds = 1 silver), with the game's quantity slider. Nothing else changes.
