@@ -5,6 +5,7 @@
 <p align="center">
   <a href="https://github.com/Marukooh/Camp-Funds-Withdraw/actions/workflows/build.yml"><img alt="Build" src="https://github.com/Marukooh/Camp-Funds-Withdraw/actions/workflows/build.yml/badge.svg"></a>
   <a href="https://github.com/Marukooh/Camp-Funds-Withdraw/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/Marukooh/Camp-Funds-Withdraw?label=release&color=d4a64a"></a>
+  <a href="https://www.nexusmods.com/crimsondesert/mods/3946"><img alt="Nexus Mods" src="https://img.shields.io/badge/Nexus%20Mods-Withdraw%20Camp%20Funds-d98f40"></a>
   <img alt="Game version" src="https://img.shields.io/badge/Crimson%20Desert-2.04.04-8a1c1c">
   <img alt="Mod manager" src="https://img.shields.io/badge/DMM-4.5.1-3b5b7a">
   <img alt="Platforms" src="https://img.shields.io/badge/Windows%20%7C%20Linux%20(Proton)%20%7C%20Steam%20Deck-supported-2f6b3a">
@@ -45,7 +46,7 @@ back into silver whenever you need it.
 
 ## Installation
 **With DMM (recommended):** download the ZIP from
-[Nexus Mods](https://www.nexusmods.com/crimsondesert) or the
+[Nexus Mods](https://www.nexusmods.com/crimsondesert/mods/3946) or the
 [latest release](https://github.com/Marukooh/Camp-Funds-Withdraw/releases/latest), import it in
 DMM, enable **CampFundsWithdraw** among the ASI mods and apply.
 

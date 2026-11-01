@@ -1,5 +1,8 @@
 # Nexus Mods page setup (manual, one-off)
 
+**Page:** https://www.nexusmods.com/crimsondesert/mods/3946 (mod 3946). **Main file ID:** 8283327 (set as `NEXUSMODS_FILE_ID` in the GitHub
+environment `nexusmods`; `NEXUSMODS_API_KEY` set by Marco on 2026-11-01).
+
 Nexus has no API to create a mod page: it is created once on the website, then every update goes
 through the **Release** GitHub workflow.
 

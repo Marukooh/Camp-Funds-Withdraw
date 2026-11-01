@@ -105,6 +105,7 @@ jobs:
             echo
             echo "- Version: \`$VERSION\`"
             echo "- GitHub release: https://github.com/${{ github.repository }}/releases/tag/v$VERSION"
+            echo "- Nexus Mods page: https://www.nexusmods.com/crimsondesert/mods/3946"
             echo "- Nexus Mods upload: \`${{ inputs.publish_nexus }}\`"
             echo "- Nexus file version ID: \`${{ steps.nexus-upload.outputs.version_id }}\`"
           } >> "$GITHUB_STEP_SUMMARY"
