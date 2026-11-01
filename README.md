@@ -29,6 +29,12 @@ back into silver whenever you need it.
 - **Fail-closed:** after a game update, if anything it needs can't be found, the mod disables itself
   and says so in its log instead of guessing.
 
+## Screenshots
+<p align="center">
+  <img src="art/menu.png" alt="Withdraw Camp Funds in Carl's menu" height="420">
+  <img src="art/modal.png" alt="Quantity slider" width="100%">
+</p>
+
 ## Requirements
 - Crimson Desert **2.04.04** (Steam).
 - An ASI loader. [Definitive Mod Manager](https://www.nexusmods.com/crimsondesert) 4.5.1+ already

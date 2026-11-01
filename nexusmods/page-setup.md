@@ -11,7 +11,7 @@ through the **Release** GitHub workflow.
 - **Tags:** Gameplay, Economy/Money, User Interface, ASI, Quality of Life
 - **Version:** `0.2.2`
 - **Main image (thumbnail):** `art/thumbnail.png` (1280×720); also add `art/banner.png` and an
-  in-game screenshot of Carl's menu as images
+  `art/menu.png` (Carl's menu) and `art/modal.png` (slider) as images
 - **Requirements:** Definitive Mod Manager (or any ASI loader); notes: "Linux/Steam Deck: winmm=n,b"
 - **Permissions:** no re-upload, no modification, no asset use, no conversion, no use in other mods
   or mod packs; credit: "See NOTICE.md on GitHub"; donation points as preferred

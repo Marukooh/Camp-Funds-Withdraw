@@ -20,6 +20,10 @@ Every donation to the Greymane Camp is a one-way trip: the Camp Funds pile up, b
 
 [line]
 
+[center][img]https://raw.githubusercontent.com/Marukooh/Camp-Funds-Withdraw/main/art/menu.png[/img]
+
+[img]https://raw.githubusercontent.com/Marukooh/Camp-Funds-Withdraw/main/art/modal.png[/img][/center]
+
 [size=4][color=#D4A64A][b]How to use it[/b][/color][/size]
 [size=3][color=#D4D4D8]Talk to [b]Carl[/b] at the Greymane Camp (Camp Provisions Tent), choose [b]Withdraw Camp Funds[/b], pick the amount of silver with the slider and confirm. Your Camp Funds go down by 10 × the silver you take.[/color][/size]
 
