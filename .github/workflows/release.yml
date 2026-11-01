@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: Mod version, must match MOD_VERSION in src/main.cpp (e.g. 0.2.2)
+        description: Mod version = game version it is validated for (e.g. 2.04.05); must match MOD_VERSION in src/main.cpp
         required: true
         type: string
       changelog:
