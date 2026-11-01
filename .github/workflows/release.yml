@@ -39,7 +39,7 @@ jobs:
     environment: nexusmods
     env:
       VERSION: ${{ inputs.version }}
-      ZIP: Withdraw Camp Funds v${{ inputs.version }}.zip
+      PACKAGE: Withdraw Camp Funds v${{ inputs.version }}.zip
     steps:
       - name: Check out repository
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
@@ -68,8 +68,8 @@ jobs:
         run: |
           set -euo pipefail
           ./tools/package.sh
-          (cd dist && zip -q -X "../$ZIP" CampFundsWithdraw.asi CampFundsWithdraw.ini)
-          unzip -l "$ZIP"
+          (cd dist && zip -q -X "../$PACKAGE" CampFundsWithdraw.asi CampFundsWithdraw.ini)
+          unzip -l "$PACKAGE"
 
       - name: Create GitHub release
         env:
@@ -78,7 +78,7 @@ jobs:
         run: |
           set -euo pipefail
           printf '%s\n\nFor Crimson Desert 2.04.04. Install with DMM 4.5.1+ (ASI mod) or copy both files into `bin64/`. Linux/Steam Deck: add `winmm=n,b` to WINEDLLOVERRIDES.\n' "$CHANGELOG" > notes.md
-          gh release create "v$VERSION" "$ZIP" --title "Withdraw Camp Funds $VERSION" --notes-file notes.md --target "$GITHUB_SHA"
+          gh release create "v$VERSION" "$PACKAGE" --title "Withdraw Camp Funds $VERSION" --notes-file notes.md --target "$GITHUB_SHA"
 
       - name: Upload to Nexus Mods
         id: nexus-upload
@@ -87,7 +87,7 @@ jobs:
         with:
           api_key: ${{ secrets.NEXUSMODS_API_KEY }}
           file_id: ${{ vars.NEXUSMODS_FILE_ID }}
-          filename: ${{ env.ZIP }}
+          filename: ${{ env.PACKAGE }}
           version: ${{ inputs.version }}
           display_name: Withdraw Camp Funds
           description: ${{ inputs.changelog }}
