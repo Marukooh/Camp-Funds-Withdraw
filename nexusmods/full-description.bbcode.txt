@@ -1,6 +1,6 @@
 [center][img]https://raw.githubusercontent.com/Marukooh/Camp-Funds-Withdraw/main/art/banner.png[/img]
 
-[size=3][color=#4ADE80][b]FOR CRIMSON DESERT 2.04.03[/b][/color]  •  [color=#FBBF24][b]Windows, Linux (Proton) and Steam Deck[/b][/color][/size][/center]
+[size=3][color=#4ADE80][b]FOR CRIMSON DESERT 2.04.04[/b][/color]  •  [color=#FBBF24][b]Windows, Linux (Proton) and Steam Deck[/b][/color][/size][/center]
 
 [line]
 
@@ -28,7 +28,7 @@ Every donation to the Greymane Camp is a one-way trip: the Camp Funds pile up, b
 [size=4][color=#D4A64A][b]Requirements[/b][/color][/size]
 [size=3][color=#D4D4D8]
 [list]
-[*]Crimson Desert [b]2.04.03[/b].
+[*]Crimson Desert [b]2.04.04[/b].
 [*]An ASI loader: [b]Definitive Mod Manager 4.5.1+[/b] already installs one ([i]winmm.dll[/i] in [i]bin64[/i]).
 [*][b]Linux / Steam Deck:[/b] add [i]winmm=n,b[/i] to your launch options, e.g. [i]WINEDLLOVERRIDES="winmm=n,b" %command%[/i] (append it to your existing overrides if you already have some).
 [/list]

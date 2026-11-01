@@ -7,7 +7,7 @@
 #include <cstdarg>
 #include <cstring>
 
-#define MOD_VERSION "0.2.1"
+#define MOD_VERSION "0.2.2"
 
 // ---------------------------------------------------------------------------------------------
 // Logging and configuration
@@ -69,8 +69,12 @@ static void LoadConfig() {
 static uint8_t *g_base;
 static size_t g_size;
 struct Section { uint8_t *p; size_t n; };
-static Section g_text, g_rdata, g_data;  // .trace (code), .xtls (rdata), .reloc (data) in 2.04
+static Section g_text, g_rdata, g_data;  // game code, read-only data, writable data
 
+// Section names are shuffled by the protection on every build (2.04.03: .trace/.xtls/.reloc,
+// 2.04.04: .xtext/.shared/.sdata), so sections are picked by role: the largest executable
+// non-writable one (game code; the rwx protection VM is excluded), the largest read-only
+// initialized one, and the largest writable non-executable one.
 static bool FindSections() {
     if (!g_base) g_base = (uint8_t *)GetModuleHandleA(nullptr);
     auto dos = (IMAGE_DOS_HEADER *)g_base;
@@ -78,12 +82,13 @@ static bool FindSections() {
     g_size = nt->OptionalHeader.SizeOfImage;
     auto sec = IMAGE_FIRST_SECTION(nt);
     for (int i = 0; i < nt->FileHeader.NumberOfSections; i++, sec++) {
-        char name[9] = {};
-        memcpy(name, sec->Name, 8);
+        DWORD ch = sec->Characteristics;
+        bool exec = ch & IMAGE_SCN_MEM_EXECUTE, write = ch & IMAGE_SCN_MEM_WRITE;
+        bool init = ch & IMAGE_SCN_CNT_INITIALIZED_DATA, discard = ch & IMAGE_SCN_MEM_DISCARDABLE;
         Section s{g_base + sec->VirtualAddress, sec->Misc.VirtualSize};
-        if (!strcmp(name, ".trace")) g_text = s;
-        else if (!strcmp(name, ".xtls")) g_rdata = s;
-        else if (!strcmp(name, ".reloc")) g_data = s;
+        if (exec && !write) { if (s.n > g_text.n) g_text = s; }
+        else if (!exec && !write && init && !discard) { if (s.n > g_rdata.n) g_rdata = s; }
+        else if (!exec && write && init) { if (s.n > g_data.n) g_data = s; }
     }
     Log("image %p size %zu MB; code %p+%zx rdata %p+%zx data %p+%zx", g_base, g_size >> 20, g_text.p,
         g_text.n, g_rdata.p, g_rdata.n, g_data.p, g_data.n);
