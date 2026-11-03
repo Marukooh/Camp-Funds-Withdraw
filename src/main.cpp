@@ -36,8 +36,8 @@ struct Config {
     bool showCostPreview = true;
     char menuLabel[128] = "Withdraw Camp Funds";
     char title[256] = "Withdraw Camp Funds";
-    char text[512] = "Convert Camp Funds into silver: %RATE% Camp Funds = 1 silver.\n"
-                     "Available: %FUNDS% Camp Funds (up to %MAX% silver).";
+    char text[512] = "Convert Camp Funds into silver: %RATE% Camp Funds = 1 copper (100 copper = 1 silver).\n"
+                     "Available: %FUNDS% Camp Funds (up to %MAX% copper = %MAXSILVER% silver).";
 } g_cfg;
 
 static void ReadText(const char *sec, const char *key, char *out, size_t n, const char *ini) {
@@ -461,6 +461,11 @@ static void FormatText(char *out, size_t n, int64_t rate, int64_t funds, int64_t
         size_t skip = 0;
         if (!strncmp(s, "%RATE%", 6)) { snprintf(tmp, sizeof tmp, "%lld", (long long)rate); rep = tmp; skip = 6; }
         else if (!strncmp(s, "%FUNDS%", 7)) { snprintf(tmp, sizeof tmp, "%lld", (long long)funds); rep = tmp; skip = 7; }
+        else if (!strncmp(s, "%MAXSILVER%", 11)) {
+            // The silver item counts copper (100 copper = 1 silver, shown with two decimals in game).
+            snprintf(tmp, sizeof tmp, "%lld.%02lld", (long long)(maxSilver / 100), (long long)(maxSilver % 100));
+            rep = tmp; skip = 11;
+        }
         else if (!strncmp(s, "%MAX%", 5)) { snprintf(tmp, sizeof tmp, "%lld", (long long)maxSilver); rep = tmp; skip = 5; }
         if (rep) { for (; *rep && o + 1 < n; rep++) out[o++] = *rep; s += skip; }
         else out[o++] = *s++;

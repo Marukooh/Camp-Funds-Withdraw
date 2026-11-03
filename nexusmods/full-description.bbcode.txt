@@ -10,7 +10,7 @@ Every donation to the Greymane Camp is a one-way trip: the Camp Funds pile up, b
 
 [color=#FBBF24][b]Features[/b][/color]
 [list]
-[*][b]Fair rate, read from the game:[/b] the exact inverse of the game's own donation rate. Since patch 2.01 one silver donated gives 10 Camp Funds, so [b]10 Camp Funds give 1 silver[/b]. If a patch changes the donation rate, the withdrawal follows it automatically.
+[*][b]Fair rate, read from the game:[/b] the exact inverse of the game's own donation rate. Silver is counted in copper (100 copper = 1 silver) and since patch 2.01 every copper donated gives 10 Camp Funds, so [b]10 Camp Funds give 1 copper, and 1,000 Camp Funds give 1 silver[/b]. Whatever you donate, you can withdraw back exactly. If a patch changes the donation rate, the withdrawal follows it automatically.
 [*][b]Pick the amount[/b] with the game's own quantity slider, with a confirmation, capped at what your Camp Funds allow.
 [*][b]Only in Carl's menu:[/b] every other NPC, menu and button works exactly as before, and donating still works as usual.
 [*][b]Safe:[/b] the conversion goes through the game's own camp transaction, so the game itself checks your balance and applies the change in one step. Nothing is written to disk and no game file is replaced.
@@ -25,7 +25,7 @@ Every donation to the Greymane Camp is a one-way trip: the Camp Funds pile up, b
 [img]https://raw.githubusercontent.com/Marukooh/Camp-Funds-Withdraw/main/art/modal.png[/img][/center]
 
 [size=4][color=#D4A64A][b]How to use it[/b][/color][/size]
-[size=3][color=#D4D4D8]Talk to [b]Carl[/b] at the Greymane Camp (Camp Provisions Tent), choose [b]Withdraw Camp Funds[/b], pick the amount of silver with the slider and confirm. Your Camp Funds go down by 10 × the silver you take.[/color][/size]
+[size=3][color=#D4D4D8]Talk to [b]Carl[/b] at the Greymane Camp (Camp Provisions Tent), choose [b]Withdraw Camp Funds[/b], pick the amount with the slider (counted in copper, like the game's own donation) and confirm. Your Camp Funds go down by 10 × the copper you take: 1,000 Camp Funds for every silver.[/color][/size]
 
 [line]
 
@@ -48,7 +48,7 @@ To uninstall, disable it in DMM or delete the two files. Your save is not change
 [/color][/size]
 
 [size=4][color=#D4A64A][b]Configuration[/b][/color][/size]
-[size=3][color=#D4D4D8][i]CampFundsWithdraw.ini[/i] lets you rename the menu entry ([i]MenuLabel[/i]), change the modal texts ([i]Title[/i], [i]Text[/i], with [i]%RATE%[/i], [i]%FUNDS%[/i], [i]%MAX%[/i]) or turn the mod off ([i]Enabled=0[/i]).[/color][/size]
+[size=3][color=#D4D4D8][i]CampFundsWithdraw.ini[/i] lets you rename the menu entry ([i]MenuLabel[/i]), change the modal texts ([i]Title[/i], [i]Text[/i], with [i]%RATE%[/i], [i]%FUNDS%[/i], [i]%MAX%[/i], [i]%MAXSILVER%[/i]) or turn the mod off ([i]Enabled=0[/i]).[/color][/size]
 
 [line]
 

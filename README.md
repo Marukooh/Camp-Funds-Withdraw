@@ -17,9 +17,11 @@
 **Withdraw Camp Funds** option to Carl's menu at the Camp Provisions Tent, so you can turn Camp Funds
 back into silver whenever you need it.
 
-- **Fair rate, read from the game:** the exact inverse of the game's own donation rate. Since patch
-  2.01, 1 silver donated gives 10 Camp Funds, so **10 Camp Funds give 1 silver**. If a future patch
-  changes the donation rate, the withdrawal rate follows automatically.
+- **Fair rate, read from the game:** the exact inverse of the game's own donation rate. Silver is
+  counted in copper (100 copper = 1 silver) and since patch 2.01 every copper donated gives 10 Camp
+  Funds, so **10 Camp Funds give 1 copper, and 1,000 Camp Funds give 1 silver**. Whatever you donate,
+  you can withdraw back exactly. If a future patch changes the donation rate, the withdrawal rate
+  follows automatically.
 - **Pick the amount:** the game's own quantity slider, with a confirmation, capped at what your Camp
   Funds allow.
 - **Only where it belongs:** the option appears only in Carl's menu. Every other NPC, menu and button
@@ -56,8 +58,9 @@ DMM, enable **CampFundsWithdraw** among the ASI mods and apply.
 To uninstall, disable it in DMM or delete the two files.
 
 ## Usage
-Talk to **Carl** at the Greymane Camp, choose **Withdraw Camp Funds**, pick the amount of silver with
-the slider and confirm. Your Camp Funds go down by 10 × the silver you take.
+Talk to **Carl** at the Greymane Camp, choose **Withdraw Camp Funds**, pick the amount with the
+slider (counted in copper, like the game's own donation) and confirm. Your Camp Funds go down by
+10 × the copper you take: 1,000 Camp Funds for every silver.
 
 ## Configuration
 `CampFundsWithdraw.ini`, next to the `.asi`:
@@ -66,7 +69,7 @@ the slider and confirm. Your Camp Funds go down by 10 × the silver you take.
 |---|---|---|
 | `Enabled` | `1` | `0` turns the mod off |
 | `MenuLabel` | `Withdraw Camp Funds` | text of the entry in Carl's menu |
-| `Title`, `Text` | English | modal texts; `%RATE%`, `%FUNDS%`, `%MAX%` and `\n` are supported |
+| `Title`, `Text` | English | modal texts; `%RATE%`, `%FUNDS%`, `%MAX%` (copper), `%MAXSILVER%` and `\n` are supported |
 | `ShowCostPreview` | `1` | also show the Camp Funds that will be spent under the slider |
 
 ## Troubleshooting
