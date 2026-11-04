@@ -12,7 +12,7 @@ through the **Release** GitHub workflow.
 - **Description:** `nexusmods/full-description.bbcode.txt` (BBCode editor)
 - **Category:** Gameplay (or Miscellaneous if Gameplay isn't available)
 - **Tags:** Gameplay, Economy/Money, User Interface, ASI, Quality of Life
-- **Version:** `2.04.05b`
+- **Version:** `2.04.06`
 - **Main image (thumbnail):** `art/thumbnail.png` (1280×720); also add `art/banner.png` and an
   `art/menu.png` (Carl's menu) and `art/modal.png` (slider) as images
 - **Requirements:** Definitive Mod Manager (or any ASI loader); notes: "Linux/Steam Deck: winmm=n,b"
@@ -21,7 +21,7 @@ through the **Release** GitHub workflow.
 - **Source code link:** https://github.com/Marukooh/Camp-Funds-Withdraw
 
 ## First file
-Upload `Withdraw Camp Funds v2.04.05b.zip` (from the GitHub release, or `tools/package.sh` then zip
+Upload `Withdraw Camp Funds v2.04.06.zip` (from the GitHub release, or `tools/package.sh` then zip
 `dist/*`) as a **Main** file named `Withdraw Camp Funds`, with "Mod Manager Download" enabled.
 
 ## Link the workflow

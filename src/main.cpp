@@ -7,7 +7,7 @@
 #include <cstdarg>
 #include <cstring>
 
-#define MOD_VERSION "2.04.05b"
+#define MOD_VERSION "2.04.06"
 
 // ---------------------------------------------------------------------------------------------
 // Logging and configuration
