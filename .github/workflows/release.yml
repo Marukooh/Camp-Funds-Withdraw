@@ -77,7 +77,7 @@ jobs:
           CHANGELOG: ${{ inputs.changelog }}
         run: |
           set -euo pipefail
-          printf '%s\n\nFor Crimson Desert 2.04.07. Install with DMM 4.5.1+ (ASI mod) or copy both files into `bin64/`. Linux/Steam Deck: add `winmm=n,b` to WINEDLLOVERRIDES.\n' "$CHANGELOG" > notes.md
+          printf '%s\n\nFor Crimson Desert 2.04.08. Install with DMM 4.5.1+ (ASI mod) or copy both files into `bin64/`. Linux/Steam Deck: add `winmm=n,b` to WINEDLLOVERRIDES.\n' "$CHANGELOG" > notes.md
           gh release create "v$VERSION" "$PACKAGE" --title "Withdraw Camp Funds $VERSION" --notes-file notes.md --target "$GITHUB_SHA"
 
       - name: Upload to Nexus Mods
