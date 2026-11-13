@@ -7,7 +7,7 @@
 #include <cstdarg>
 #include <cstring>
 
-#define MOD_VERSION "2.05.00"
+#define MOD_VERSION "2.05.00b"
 
 // ---------------------------------------------------------------------------------------------
 // Logging and configuration
@@ -207,6 +207,7 @@ static struct {
     CreateModalFn createModal;
     int32_t *minCount;
     void **cfgRootA, **cfgRootB;
+    uint32_t cfgSilver, cfgCamp;  // offsets of the silver / camp money u16 item indexes in the global config
     void **netMgr;
     SendFn send;
     uint16_t opcode;
@@ -295,6 +296,20 @@ static bool Resolve() {
     a = Find(fModal, 0x300, P("49 8B CF E8 ?? ?? ?? ?? 48 8B 8D ?? ?? 00 00"));
     NEED(a, "modal: create");
     G.createModal = (CreateModalFn)Rel(a + 4);
+    // createModal compares the item with cfg->silver, then shows cfg->camp money (0xf0/0xf2 on 2.04,
+    // 0xc8/0xca on 2.05).
+    {
+        const Pat cp = P("48 8B 41 30 0F B7 88 ?? ?? 00 00 66 89 8D");
+        uint8_t *s1 = Find((uint8_t *)G.createModal, 0x600, cp);
+        uint8_t *s2 = s1 ? Find((uint8_t *)G.createModal, 0x600, cp, s1) : nullptr;
+        if (s1 && s2) {
+            G.cfgSilver = *(uint32_t *)(s1 + 7);
+            G.cfgCamp = *(uint32_t *)(s2 + 7);
+        } else {
+            G.cfgSilver = 0xf0, G.cfgCamp = 0xf2;  // 2.04 layout
+        }
+        NEED(G.cfgCamp == G.cfgSilver + 2 && G.cfgSilver < 0x400, "createModal: config item offsets");
+    }
     a = Find(fModal, 0x300, P("48 8D 4D 80 E8 ?? ?? ?? ?? 90 EB"));
     NEED(a, "modal: cfg dtor");
     G.cfgDtor = (CfgFn)Rel(a + 5);
@@ -383,8 +398,8 @@ static bool Resolve() {
     G.locHash = (LocHashFn)Rel(c1 + 1);
     G.locId = (LocIdFn)Rel(c2 + 3);
 
-    Log("resolved: modal %p createModal %p send %p opcode %#x net %p rate flag %p", fModal, G.createModal, G.send,
-        G.opcode, G.netMgr, G.rateFlag);
+    Log("resolved: modal %p createModal %p send %p opcode %#x net %p rate flag %p cfg silver/camp +%#x/+%#x", fModal,
+        G.createModal, G.send, G.opcode, G.netMgr, G.rateFlag, G.cfgSilver, G.cfgCamp);
     Log("server: vary %p site %p, itemValue site %p, record site %p", G.vary, G.siteVary, G.siteItemValue,
         G.siteRecord);
     Log("menu: vtable %p, activate %p (sites %p %p), add button %p (site %p), extra button %p, faction type %p", G.vtMenu,
@@ -407,8 +422,8 @@ static uint8_t *GameCfg() {
     p = *(uint8_t **)(p + 8);
     return p ? *(uint8_t **)(p + 0x30) : nullptr;
 }
-static uint16_t SilverIdx() { uint8_t *c = GameCfg(); return c ? *(uint16_t *)(c + 0xf0) : 0xffff; }
-static uint16_t CampMoneyIdx() { uint8_t *c = GameCfg(); return c ? *(uint16_t *)(c + 0xf2) : 0xffff; }
+static uint16_t SilverIdx() { uint8_t *c = GameCfg(); return c ? *(uint16_t *)(c + G.cfgSilver) : 0xffff; }
+static uint16_t CampMoneyIdx() { uint8_t *c = GameCfg(); return c ? *(uint16_t *)(c + G.cfgCamp) : 0xffff; }
 static int64_t Rate() { return *G.rateFlag ? 10 : 1; }
 
 struct ActorHandle {
