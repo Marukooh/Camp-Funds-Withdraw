@@ -7,7 +7,7 @@
 #include <cstdarg>
 #include <cstring>
 
-#define MOD_VERSION "2.04.08"
+#define MOD_VERSION "2.05.00"
 
 // ---------------------------------------------------------------------------------------------
 // Logging and configuration
@@ -170,7 +170,8 @@ using ActorHandleFn = void *(__fastcall *)(void *unused, void *out);
 using HandleReleaseFn = void(__fastcall *)(void *h);
 using GetInvFn = void *(__fastcall *)(void *actor);
 using GetCountFn = int64_t(__fastcall *)(void *inv, void *actor, uint32_t itemIdx);
-using InfoFn = uint8_t *(__fastcall *)(void *unused, uint32_t idx);
+// 2.04 reads the index from edx, 2.05 from *(u16 *)rcx: Info() passes both.
+using InfoFn = uint8_t *(__fastcall *)(const uint16_t *pidx, uint32_t idx);
 using CfgFn = void(__fastcall *)(void *cfg);
 using SetTextFn = void(__fastcall *)(char *dst, uint32_t cap, const char *src);
 using CreateModalFn = void *(__fastcall *)(void *owner, void *view, void *cfg, int64_t max, int64_t min,
@@ -252,9 +253,11 @@ static bool Resolve() {
     a = Find(whEvent, 0x800, P("44 0F B7 8F C8 04 00 00 48 8B 97 D0 01 00 00 48 8D 8C 24 ?? ?? ?? ?? E8"));
     NEED(a, "warehouse event: donation modal helper");
     uint8_t *fModal = Rel(a + 24);
-    a = Find(whConfirm, 0x300, P("45 0F B7 86 C8 04 00 00 48 8D 94 24 ?? ?? ?? ?? 48 8B 49 18 E8"));
-    NEED(a, "warehouse confirm: donate helper call");
-    uint8_t *fDonate = Rel(a + 21);
+    // 2.04: r14 + lea [rsp+disp32]; 2.05: r15 + lea [rbp+disp8].
+    uint8_t *fDonate = nullptr;
+    if ((a = Find(whConfirm, 0x300, P("45 0F B7 86 C8 04 00 00 48 8D 94 24 ?? ?? ?? ?? 48 8B 49 18 E8")))) fDonate = Rel(a + 21);
+    else if ((a = Find(whConfirm, 0x300, P("45 0F B7 87 C8 04 00 00 48 8D 55 ?? 48 8B 49 18 E8")))) fDonate = Rel(a + 17);
+    NEED(fDonate, "warehouse confirm: donate helper call");
     NEED(whOpen, "warehouse open command");
 
     // Donation modal helper (FUN_1411fe070).
@@ -262,29 +265,34 @@ static bool Resolve() {
     NEED(a, "modal: actor handle");
     G.actorHandle = (ActorHandleFn)Rel(a + 6);
     a = Find(fModal, 0x100, P("41 BC EB 01 00 00 65 48 8B 04 25 58 00 00 00 4C 03 20 48 8B 05 ?? ?? ?? ?? 41 80 3C 24 00 48 0F 45 05 ?? ?? ?? ?? 48 8B 00 48 8B 50 08 4C 8B 42 30"));
+    if (!a) a = Find(fModal, 0x100, P("65 48 8B 04 25 58 00 00 00 48 8B 10 41 B8 EB 01 00 00 48 8B 05 ?? ?? ?? ?? 41 80 3C 10 00 48 0F 45 05 ?? ?? ?? ?? 48 8B 00 48 8B 50 08 4C 8B 42 30"));  // 2.05
     NEED(a, "modal: config roots");
     G.cfgRootA = (void **)Rel(a + 21);
     G.cfgRootB = (void **)Rel(a + 34);
     a = Find(fModal, 0x200, P("48 8D 4D 80 E8 ?? ?? ?? ?? 90 48 8B 8D"));
     NEED(a, "modal: cfg ctor");
     G.cfgCtor = (CfgFn)Rel(a + 5);
-    a = Find(fModal, 0x200, P("0F B7 11 E8 ?? ?? ?? ?? 48 8B 48 10 48 8B 11 4C 8B 42 08"));
+    a = Find(fModal, 0x200, P("E8 ?? ?? ?? ?? 48 8B 48 10 48 8B 11 4C 8B 42 08"));  // 2.05 dropped the movzx edx
     NEED(a, "modal: localized text");
-    G.locText = (LocTextFn)Rel(a + 4);
+    G.locText = (LocTextFn)Rel(a + 1);
     a = Find(fModal, 0x200, P("8B 95 A8 08 00 00 E8"));
     NEED(a, "modal: set text");
     G.setText = (SetTextFn)Rel(a + 7);
-    a = Find(fModal, 0x300, P("48 8B CE E8 ?? ?? ?? ?? 0F B7 9D 00 14 00 00"));
+    a = Find(fModal, 0x300, P("48 8B CE E8 ?? ?? ?? ?? 0F B7 9D ?? ?? 00 00"));
     NEED(a, "modal: inventory");
     G.getInv = (GetInvFn)Rel(a + 4);
     a = Find(fModal, 0x300, P("48 8B C8 E8 ?? ?? ?? ?? 48 8B F0 48 85 C0"));
     NEED(a, "modal: item count");
     G.getCount = (GetCountFn)Rel(a + 4);
-    a = Find(fModal, 0x300, P("8B D3 E8 ?? ?? ?? ?? 48 63 15"));
+    if ((a = Find(fModal, 0x300, P("8B D3 E8 ?? ?? ?? ?? 48 63 15")))) {
+        G.itemInfo = (InfoFn)Rel(a + 3);
+        G.minCount = (int32_t *)Rel(a + 10);
+    } else if ((a = Find(fModal, 0x300, P("48 8D 8D ?? ?? 00 00 E8 ?? ?? ?? ?? 48 63 15")))) {  // 2.05: lea rcx, &idx
+        G.itemInfo = (InfoFn)Rel(a + 8);
+        G.minCount = (int32_t *)Rel(a + 15);
+    }
     NEED(a, "modal: item info, min count");
-    G.itemInfo = (InfoFn)Rel(a + 3);
-    G.minCount = (int32_t *)Rel(a + 10);
-    a = Find(fModal, 0x300, P("49 8B CF E8 ?? ?? ?? ?? 48 8B 8D 10 14 00 00"));
+    a = Find(fModal, 0x300, P("49 8B CF E8 ?? ?? ?? ?? 48 8B 8D ?? ?? 00 00"));
     NEED(a, "modal: create");
     G.createModal = (CreateModalFn)Rel(a + 4);
     a = Find(fModal, 0x300, P("48 8D 4D 80 E8 ?? ?? ?? ?? 90 EB"));
@@ -296,11 +304,13 @@ static bool Resolve() {
     G.handleRelease = (HandleReleaseFn)Rel(a + 18);
 
     // Client donate helper (FUN_1404cd190) and the VaryResource sender (FUN_140c91fc0).
-    a = Find(fDonate, 0x100, P("E8 ?? ?? ?? ?? 48 8D 58 08 8B D6 E8 ?? ?? ?? ?? 4C 8D 40 08"));
+    if ((a = Find(fDonate, 0x100, P("E8 ?? ?? ?? ?? 48 8D 58 08 8B D6 E8 ?? ?? ?? ?? 4C 8D 40 08")))) G.factionInfo = (InfoFn)Rel(a + 12);
+    else if ((a = Find(fDonate, 0x100, P("E8 ?? ?? ?? ?? 48 8D 58 08 48 8D 8C 24 ?? ?? ?? ?? E8 ?? ?? ?? ?? 4C 8D 40 08"))))  // 2.05
+        G.factionInfo = (InfoFn)Rel(a + 18);
     NEED(a, "donate: infos");
     NEED(Rel(a + 1) == (uint8_t *)G.itemInfo, "donate: item info matches");
-    G.factionInfo = (InfoFn)Rel(a + 12);
     a = Find(fDonate, 0x120, P("48 8B 4D 10 E8"));
+    if (!a) a = Find(fDonate, 0x120, P("48 8B 4E 10 E8"));  // 2.05: comp in rsi
     NEED(a, "donate: sender");
     uint8_t *fSend = Rel(a + 5);
     NEED(Contains(fSend, 0x200, P("FF 90 68 01 00 00 3C FF")), "sender: peer vfunc");
@@ -322,20 +332,23 @@ static bool Resolve() {
     G.siteVary = a + 16;
     G.vary = (VaryFn)Rel(a + 17);
     a = Find((uint8_t *)G.vary, 0x600, P("80 3D ?? ?? ?? ?? 00 74 07 48 8D 3C BF 48 03 FF 4C 8B C7 48 8D 54 24 ?? 48 8D 4D ?? E8"));
+    if (!a) a = Find((uint8_t *)G.vary, 0x600, P("80 3D ?? ?? ?? ?? 00 74 07 48 8D 1C 9B 48 03 DB 4C 8B C3 48 8D 54 24 ?? 48 8D 4D ?? E8"));  // 2.05: rbx
     NEED(a, "server: rate multiplier");
     G.rateFlag = Rel(a + 2, 1);
     G.siteItemValue = a + 28;
     G.itemValue = (ItemValueFn)Rel(a + 29);
-    a = Find((uint8_t *)G.vary, 0x800, P("48 8B 48 68 4C 8B 46 10 0F B7 56 08 48 8B 49 28 E8"));
+    if ((a = Find((uint8_t *)G.vary, 0x800, P("48 8B 48 68 4C 8B 46 10 0F B7 56 08 48 8B 49 28 E8")))) a += 16;
+    else if ((a = Find((uint8_t *)G.vary, 0x800, P("48 8B 48 68 48 8B 5D ?? 4C 8B 43 10 0F B7 53 08 48 8B 49 28 E8")))) a += 20;  // 2.05
     NEED(a, "server: donation record");
-    G.siteRecord = a + 16;
-    G.record = (RecordFn)Rel(a + 17);
+    G.siteRecord = a;
+    G.record = (RecordFn)Rel(a + 1);
     // Per-faction table of the camp component (entry = idx*0x1c8 + *(comp+0x20), type key at +0x18) and
     // the type info whose +0xe == 3 marks a camp faction (the branch that applies the x10 rate).
     NEED(Contains((uint8_t *)G.vary, 0x400, P("48 69 D0 C8 01 00 00 49 03 57 20 74 05 44 0F B7 72 18")), "server: faction table layout");
-    a = Find((uint8_t *)G.vary, 0x400, P("89 44 24 78 8B D0 E8 ?? ?? ?? ?? 4C 8B 75 D0 80 78 0E 03"));
+    if ((a = Find((uint8_t *)G.vary, 0x400, P("89 44 24 78 8B D0 E8 ?? ?? ?? ?? 4C 8B 75 D0 80 78 0E 03")))) a += 6;
+    else if ((a = Find((uint8_t *)G.vary, 0x400, P("48 8D 4C 24 ?? E8 ?? ?? ?? ?? 4C 8B 75 ?? 80 78 0E 03")))) a += 5;  // 2.05: lea rcx, &idx
     NEED(a, "server: faction type info");
-    G.typeInfo = (InfoFn)Rel(a + 7);
+    G.typeInfo = (InfoFn)Rel(a + 1);
 
     // NPC function menu (ButtonListPanel).
     G.vtMenu = FindVtable(".?AVUIGamePlayControl_Root_ButtonList@uiCommonScript@pa@@");
@@ -382,6 +395,8 @@ static bool Resolve() {
 
 // ---------------------------------------------------------------------------------------------
 // Game state helpers
+
+static uint8_t *Info(InfoFn f, uint32_t idx) { uint16_t i = (uint16_t)idx; return f(&i, idx); }
 
 static uint8_t *GameCfg() {
     uint8_t *tls0 = *(uint8_t **)__readgsqword(0x58);
@@ -441,8 +456,8 @@ static int CampFactionIdx() {
     for (uint32_t i = 0; table && i < n && i < 0x10000; i++) {
         uint16_t type = *(uint16_t *)(table + i * 0x1c8 + 0x18);
         if (type == 0xffff) continue;
-        uint8_t *t = G.typeInfo(nullptr, type);
-        uint8_t *f = G.factionInfo(nullptr, i);
+        uint8_t *t = Info(G.typeInfo, type);
+        uint8_t *f = Info(G.factionInfo, i);
         if (!t || t[0xe] != 3 || !f || !f[0x10]) continue;
         Log("camp faction candidate: idx %u key %u type %u", i, *(uint32_t *)(f + 8), type);
         if (found < 0) found = (int)i;
@@ -509,7 +524,7 @@ static void *OpenWithdrawModal(uint8_t *panel, void *owner) {
     char *t2 = *(char **)(cfg + 0xa38) ? *(char **)(cfg + 0xa38) : (char *)(cfg + 0x930);
     *(uint32_t *)(cfg + 0xa44) = 0xffffffff;
     G.setText(t2, *(uint32_t *)(cfg + 0xa40), text);
-    uint32_t silverKey = *(uint32_t *)(G.itemInfo(nullptr, silverIdx) + 8);
+    uint32_t silverKey = *(uint32_t *)(Info(G.itemInfo, silverIdx) + 8);
     void *modal = G.createModal(owner, view, cfg, maxSilver, (int64_t)*G.minCount, silverKey, 0, 1,
                                 g_cfg.showCostPreview ? 1 : 0);
     G.cfgDtor(cfg);
@@ -528,8 +543,8 @@ static void SendWithdraw(int factionIdx, int64_t silver) {
     uint8_t peer = (uint8_t)(uintptr_t)CallV(sender, 0x168);
     void *net = *G.netMgr;
     if (peer == 0xff || !net || !*(uint8_t *)((uint8_t *)net + 0x112)) { Log("withdraw: not connected"); return; }
-    uint32_t factionKey = *(uint32_t *)(G.factionInfo(nullptr, (uint32_t)factionIdx) + 8);
-    uint32_t campKey = *(uint32_t *)(G.itemInfo(nullptr, CampMoneyIdx()) + 8);
+    uint32_t factionKey = *(uint32_t *)(Info(G.factionInfo, factionIdx) + 8);
+    uint32_t campKey = *(uint32_t *)(Info(G.itemInfo, CampMoneyIdx()) + 8);
     uint64_t funds = (uint64_t)(silver * Rate());
 
     uint8_t pkt[5 + 17];

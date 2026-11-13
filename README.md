@@ -6,7 +6,7 @@
   <a href="https://github.com/Marukooh/Camp-Funds-Withdraw/actions/workflows/build.yml"><img alt="Build" src="https://github.com/Marukooh/Camp-Funds-Withdraw/actions/workflows/build.yml/badge.svg"></a>
   <a href="https://github.com/Marukooh/Camp-Funds-Withdraw/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/Marukooh/Camp-Funds-Withdraw?label=release&color=d4a64a"></a>
   <a href="https://www.nexusmods.com/crimsondesert/mods/3946"><img alt="Nexus Mods" src="https://img.shields.io/badge/Nexus%20Mods-Withdraw%20Camp%20Funds-d98f40"></a>
-  <img alt="Game version" src="https://img.shields.io/badge/Crimson%20Desert-2.04.08-8a1c1c">
+  <img alt="Game version" src="https://img.shields.io/badge/Crimson%20Desert-2.05.00-8a1c1c">
   <img alt="Mod manager" src="https://img.shields.io/badge/DMM-4.5.1-3b5b7a">
   <img alt="Platforms" src="https://img.shields.io/badge/Windows%20%7C%20Linux%20(Proton)%20%7C%20Steam%20Deck-supported-2f6b3a">
 </p>
@@ -39,7 +39,7 @@ back into silver whenever you need it.
 </p>
 
 ## Requirements
-- Crimson Desert **2.04.08** (Steam).
+- Crimson Desert **2.05.00** (Steam).
 - An ASI loader. [Definitive Mod Manager](https://www.nexusmods.com/crimsondesert) 4.5.1+ already
   installs one (`winmm.dll` in `bin64/`).
 - **Linux / Steam Deck (Proton):** the loader needs `winmm=n,b` in the launch options, for example
