@@ -68,7 +68,7 @@ jobs:
         run: |
           set -euo pipefail
           ./tools/package.sh
-          (cd dist && zip -q -X "../$PACKAGE" CampFundsWithdraw.asi CampFundsWithdraw.ini)
+          (cd dist && zip -q -X "../$PACKAGE" CampFundsWithdraw.asi CampFundsWithdraw.ini modinfo.json)
           unzip -l "$PACKAGE"
 
       - name: Create GitHub release
