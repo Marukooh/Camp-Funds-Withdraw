@@ -94,9 +94,10 @@ or `tools/package.sh` (`dist/` with the ASI and INI). Every push is built by
 [GitHub Actions](.github/workflows/build.yml).
 
 ## Also by me
-[Custom Artifact Challenges Difficulty](https://www.nexusmods.com/crimsondesert/mods/3370): choose how
-forgiving or demanding the Artifact Challenges are, with four presets (Cheat, Easy, Moderate, Hard)
-for timers, counts and distance requirements, including Charting the Unknown.
+
+[Custom Artifact Challenges Difficulty](https://www.nexusmods.com/crimsondesert/mods/3370): choose how forgiving or demanding the Artifact Challenges are, with four presets (Cheat, Easy, Moderate, Hard) for timers, counts and distance requirements, including Charting the Unknown.
+
+[Custom Axiom Bracelet](https://www.nexusmods.com/crimsondesert/mods/4165): build your own Axiom Bracelet: 28 independent options in 7 DMM cards, from resistances, regeneration and swim speed to underwater breath, stack sizes, cooldowns and durability. Tick only what you want.
 
 ## Contributing
 Bug reports, compatibility notes for new game versions and pull requests are welcome: see

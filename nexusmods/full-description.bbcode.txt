@@ -61,7 +61,9 @@ To uninstall, disable it in DMM or delete the two files. Your save is not change
 [line]
 
 [size=4][color=#D4A64A][b]Also by me[/b][/color][/size]
-[size=3][color=#D4D4D8][url=https://www.nexusmods.com/crimsondesert/mods/3370][b]Custom Artifact Challenges Difficulty[/b][/url]  -  choose how forgiving or demanding the Artifact Challenges are, with four presets (Cheat, Easy, Moderate, Hard) for timers, counts and distance requirements, including Charting the Unknown.[/color][/size]
+[size=3][color=#D4D4D8][url=https://www.nexusmods.com/crimsondesert/mods/3370][b]Custom Artifact Challenges Difficulty[/b][/url]  -  choose how forgiving or demanding the Artifact Challenges are, with four presets (Cheat, Easy, Moderate, Hard) for timers, counts and distance requirements, including Charting the Unknown.
+
+[url=https://www.nexusmods.com/crimsondesert/mods/4165][b]Custom Axiom Bracelet[/b][/url]  -  build your own Axiom Bracelet: 28 independent options in 7 DMM cards, from resistances, regeneration and swim speed to underwater breath, stack sizes, cooldowns and durability. Tick only what you want.[/color][/size]
 
 [line]
 
