@@ -7,7 +7,7 @@
 #include <cstdarg>
 #include <cstring>
 
-#define MOD_VERSION "2.05.01"
+#define MOD_VERSION "2.05.01b"
 
 // ---------------------------------------------------------------------------------------------
 // Logging and configuration
@@ -252,7 +252,7 @@ static bool Resolve() {
         G.findView = (FindViewFn)Rel(a + 36);
     } else if ((a = Find(whEvent, 0x800, P("48 3B 9F 60 04 00 00 0F 85 ?? ?? ?? ?? 48 8B 07 48 8B CF FF 90 18 01 00 00 48 8B C8 48 8D 15 ?? ?? ?? ?? E8")))) {
         G.modalViewName = (const char *)Rel(a + 31);  // 2.05.01: mov rcx, rax before the lea
-        G.findView = (FindViewFn)Rel(a + 36 + 3);
+        G.findView = (FindViewFn)Rel(a + 36);  // the call ends at the same offset as on 2.04
     }
     NEED(a, "warehouse event: donation branch");
     NEED(!strcmp(G.modalViewName, "ModalMessageView"), "warehouse event: ModalMessageView string");
@@ -404,6 +404,14 @@ static bool Resolve() {
     G.locHash = (LocHashFn)Rel(c1 + 1);
     G.locId = (LocIdFn)Rel(c2 + 3);
 
+    // Every resolved function must lie in the game code: a wrong pattern offset must disable the mod, not crash it.
+    const void *fns[] = {(void *)G.findView, fModal, (void *)G.actorHandle, (void *)G.cfgCtor, (void *)G.cfgDtor,
+                         (void *)G.locText, (void *)G.setText, (void *)G.getInv, (void *)G.getCount, (void *)G.itemInfo,
+                         (void *)G.factionInfo, (void *)G.typeInfo, (void *)G.createModal, (void *)G.handleRelease,
+                         (void *)G.send, (void *)G.vary, (void *)G.itemValue, (void *)G.record, (void *)G.activate,
+                         (void *)G.addButton, (void *)G.addExtraButton, (void *)G.locHash, (void *)G.locId};
+    for (const void *f : fns)
+        NEED((uint8_t *)f >= g_text.p && (uint8_t *)f < g_text.p + g_text.n, "resolved function outside the game code");
     Log("resolved: modal %p createModal %p send %p opcode %#x net %p rate flag %p cfg silver/camp +%#x/+%#x", fModal,
         G.createModal, G.send, G.opcode, G.netMgr, G.rateFlag, G.cfgSilver, G.cfgCamp);
     Log("server: vary %p site %p, itemValue site %p, record site %p", G.vary, G.siteVary, G.siteItemValue,
@@ -769,6 +777,12 @@ static DWORD WINAPI InitThread(void *) {
 BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, LPVOID) {
     if (reason != DLL_PROCESS_ATTACH) return TRUE;
     DisableThreadLibraryCalls(inst);
+    // The ASI loader also runs inside other executables in bin64: stay idle there, and leave the log alone
+    // (opening it would truncate the game's own log).
+    char host[MAX_PATH];
+    GetModuleFileNameA(nullptr, host, MAX_PATH);
+    const char *exe = strrchr(host, '\\');
+    if (_stricmp(exe ? exe + 1 : host, "CrimsonDesert.exe")) return TRUE;
     GetModuleFileNameA(inst, g_dir, MAX_PATH);
     if (char *slash = strrchr(g_dir, '\\')) *slash = 0;
     InitializeCriticalSection(&g_logLock);
