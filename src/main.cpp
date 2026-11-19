@@ -7,7 +7,7 @@
 #include <cstdarg>
 #include <cstring>
 
-#define MOD_VERSION "2.05.00b"
+#define MOD_VERSION "2.05.01"
 
 // ---------------------------------------------------------------------------------------------
 // Logging and configuration
@@ -247,13 +247,19 @@ static bool Resolve() {
     NEED(Contains(whRefresh, 0x300, P("80 BF FB 04 00 00 00")), "warehouse refresh: island flag");
     NEED(Contains(whRefresh, 0x300, P("66 39 B7 CA 04 00 00")), "warehouse refresh: donation item");
     uint8_t *a = Find(whEvent, 0x800, P("48 3B 9F 60 04 00 00 0F 85 ?? ?? ?? ?? 48 8B 07 48 8B CF FF 90 18 01 00 00 48 8D 15 ?? ?? ?? ?? 48 8B C8 E8"));
+    if (a) {
+        G.modalViewName = (const char *)Rel(a + 28);
+        G.findView = (FindViewFn)Rel(a + 36);
+    } else if ((a = Find(whEvent, 0x800, P("48 3B 9F 60 04 00 00 0F 85 ?? ?? ?? ?? 48 8B 07 48 8B CF FF 90 18 01 00 00 48 8B C8 48 8D 15 ?? ?? ?? ?? E8")))) {
+        G.modalViewName = (const char *)Rel(a + 31);  // 2.05.01: mov rcx, rax before the lea
+        G.findView = (FindViewFn)Rel(a + 36 + 3);
+    }
     NEED(a, "warehouse event: donation branch");
-    G.modalViewName = (const char *)Rel(a + 28);
-    G.findView = (FindViewFn)Rel(a + 36);
     NEED(!strcmp(G.modalViewName, "ModalMessageView"), "warehouse event: ModalMessageView string");
-    a = Find(whEvent, 0x800, P("44 0F B7 8F C8 04 00 00 48 8B 97 D0 01 00 00 48 8D 8C 24 ?? ?? ?? ?? E8"));
-    NEED(a, "warehouse event: donation modal helper");
-    uint8_t *fModal = Rel(a + 24);
+    uint8_t *fModal = nullptr;
+    if ((a = Find(whEvent, 0x800, P("44 0F B7 8F C8 04 00 00 48 8B 97 D0 01 00 00 48 8D 8C 24 ?? ?? ?? ?? E8")))) fModal = Rel(a + 24);
+    else if ((a = Find(whEvent, 0x800, P("0F B7 87 CA 04 00 00 66 89 44 24 20 E8")))) fModal = Rel(a + 13);  // 2.05.01
+    NEED(fModal, "warehouse event: donation modal helper");
     // 2.04: r14 + lea [rsp+disp32]; 2.05: r15 + lea [rbp+disp8].
     uint8_t *fDonate = nullptr;
     if ((a = Find(whConfirm, 0x300, P("45 0F B7 86 C8 04 00 00 48 8D 94 24 ?? ?? ?? ?? 48 8B 49 18 E8")))) fDonate = Rel(a + 21);
