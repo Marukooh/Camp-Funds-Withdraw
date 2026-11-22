@@ -33,7 +33,7 @@ Every donation to the Greymane Camp is a one-way trip: the Camp Funds pile up, b
 [size=3][color=#D4D4D8]
 [list]
 [*]Crimson Desert [b]2.05.01[/b].
-[*]An ASI loader: [b]Definitive Mod Manager 4.5.1+[/b] already installs one ([i]winmm.dll[/i] in [i]bin64[/i]).
+[*]An ASI loader: [b]Definitive Mod Manager 5.0.3+[/b] already installs one ([i]winmm.dll[/i] in [i]bin64[/i]).
 [*][b]Linux / Steam Deck:[/b] add [i]winmm=n,b[/i] to your launch options, e.g. [i]WINEDLLOVERRIDES="winmm=n,b" %command%[/i] (append it to your existing overrides if you already have some).
 [/list]
 [/color][/size]
