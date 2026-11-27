@@ -7,7 +7,7 @@
 #include <cstdarg>
 #include <cstring>
 
-#define MOD_VERSION "2.05.01b"
+#define MOD_VERSION "2.06.00"
 
 // ---------------------------------------------------------------------------------------------
 // Logging and configuration
@@ -170,8 +170,8 @@ using ActorHandleFn = void *(__fastcall *)(void *unused, void *out);
 using HandleReleaseFn = void(__fastcall *)(void *h);
 using GetInvFn = void *(__fastcall *)(void *actor);
 using GetCountFn = int64_t(__fastcall *)(void *inv, void *actor, uint32_t itemIdx);
-// 2.04 reads the index from edx, 2.05 from *(u16 *)rcx: Info() passes both.
-using InfoFn = uint8_t *(__fastcall *)(const uint16_t *pidx, uint32_t idx);
+// 2.04 uses edx, 2.05 uses *(u16 *)rcx, and 2.06 takes the table in rcx and the index in edx.
+using InfoFn = uint8_t *(__fastcall *)(const void *tableOrIndex, uint32_t idx);
 using CfgFn = void(__fastcall *)(void *cfg);
 using SetTextFn = void(__fastcall *)(char *dst, uint32_t cap, const char *src);
 using CreateModalFn = void *(__fastcall *)(void *owner, void *view, void *cfg, int64_t max, int64_t min,
@@ -188,7 +188,7 @@ using AddExtraButtonFn = void(__fastcall *)(void *panel, const char *cmd, const 
 using ActivateFn = void(__fastcall *)(void *panel, uint32_t index);
 using LocHashFn = uint32_t *(__fastcall *)(uint32_t *out, const char *name);
 using LocIdFn = uint16_t *(__fastcall *)(uint16_t *out, uint32_t hash);
-using LocTextFn = uint8_t *(__fastcall *)(void *unused, uint32_t id);
+using LocTextFn = InfoFn;
 using VFn = void *(__fastcall *)(void *self, ...);
 
 static struct {
@@ -202,11 +202,13 @@ static struct {
     GetInvFn getInv;
     GetCountFn getCount;
     InfoFn itemInfo, factionInfo, typeInfo;
+    void **itemTable, **factionTable, **typeTable, **textTable;
     CfgFn cfgCtor, cfgDtor;
     SetTextFn setText;
     CreateModalFn createModal;
     int32_t *minCount;
     void **cfgRootA, **cfgRootB;
+    uint32_t cfgTlsFlag;
     uint32_t cfgSilver, cfgCamp;  // offsets of the silver / camp money u16 item indexes in the global config
     void **netMgr;
     SendFn send;
@@ -273,15 +275,26 @@ static bool Resolve() {
     G.actorHandle = (ActorHandleFn)Rel(a + 6);
     a = Find(fModal, 0x100, P("41 BC EB 01 00 00 65 48 8B 04 25 58 00 00 00 4C 03 20 48 8B 05 ?? ?? ?? ?? 41 80 3C 24 00 48 0F 45 05 ?? ?? ?? ?? 48 8B 00 48 8B 50 08 4C 8B 42 30"));
     if (!a) a = Find(fModal, 0x100, P("65 48 8B 04 25 58 00 00 00 48 8B 10 41 B8 EB 01 00 00 48 8B 05 ?? ?? ?? ?? 41 80 3C 10 00 48 0F 45 05 ?? ?? ?? ?? 48 8B 00 48 8B 50 08 4C 8B 42 30"));  // 2.05
+    if (!a) a = Find(fModal, 0x100, P("65 48 8B 04 25 58 00 00 00 48 8B 10 41 B8 FB 01 00 00 48 8B 05 ?? ?? ?? ?? 41 80 3C 10 00 48 0F 45 05 ?? ?? ?? ?? 48 8B 00 48 8B 50 08 4C 8B 42 30"));
     NEED(a, "modal: config roots");
+    G.cfgTlsFlag = a[0] == 0x65 ? *(uint32_t *)(a + 14) : 0x1eb;
+    const bool namedTables = G.cfgTlsFlag == 0x1fb;
     G.cfgRootA = (void **)Rel(a + 21);
     G.cfgRootB = (void **)Rel(a + 34);
     a = Find(fModal, 0x200, P("48 8D 4D 80 E8 ?? ?? ?? ?? 90 48 8B 8D"));
+    if (namedTables) a = Find(fModal, 0x200, P("48 8D 4D 80 E8 ?? ?? ?? ?? 90 48 8B 95"));
     NEED(a, "modal: cfg ctor");
     G.cfgCtor = (CfgFn)Rel(a + 5);
-    a = Find(fModal, 0x200, P("E8 ?? ?? ?? ?? 48 8B 48 10 48 8B 11 4C 8B 42 08"));  // 2.05 dropped the movzx edx
-    NEED(a, "modal: localized text");
-    G.locText = (LocTextFn)Rel(a + 1);
+    if (namedTables) {
+        a = Find(fModal, 0x200, P("0F B7 12 48 8B 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8B 0D ?? ?? ?? ?? 48 85 C0 48 0F 45 C8 48 8B 49 10"));
+        NEED(a, "modal: localized text table");
+        G.textTable = (void **)Rel(a + 6);
+        G.locText = (LocTextFn)Rel(a + 11);
+    } else {
+        a = Find(fModal, 0x200, P("E8 ?? ?? ?? ?? 48 8B 48 10 48 8B 11 4C 8B 42 08"));
+        NEED(a, "modal: localized text");
+        G.locText = (LocTextFn)Rel(a + 1);
+    }
     a = Find(fModal, 0x200, P("8B 95 A8 08 00 00 E8"));
     NEED(a, "modal: set text");
     G.setText = (SetTextFn)Rel(a + 7);
@@ -291,7 +304,13 @@ static bool Resolve() {
     a = Find(fModal, 0x300, P("48 8B C8 E8 ?? ?? ?? ?? 48 8B F0 48 85 C0"));
     NEED(a, "modal: item count");
     G.getCount = (GetCountFn)Rel(a + 4);
-    if ((a = Find(fModal, 0x300, P("8B D3 E8 ?? ?? ?? ?? 48 63 15")))) {
+    if (namedTables) {
+        a = Find(fModal, 0x300, P("8B D3 48 8B 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 4C 8B 05 ?? ?? ?? ?? 48 85 C0 4C 0F 45 C0 48 63 15"));
+        NEED(a, "modal: item table and min count");
+        G.itemTable = (void **)Rel(a + 5);
+        G.itemInfo = (InfoFn)Rel(a + 10);
+        G.minCount = (int32_t *)Rel(a + 31);
+    } else if ((a = Find(fModal, 0x300, P("8B D3 E8 ?? ?? ?? ?? 48 63 15")))) {
         G.itemInfo = (InfoFn)Rel(a + 3);
         G.minCount = (int32_t *)Rel(a + 10);
     } else if ((a = Find(fModal, 0x300, P("48 8D 8D ?? ?? 00 00 E8 ?? ?? ?? ?? 48 63 15")))) {  // 2.05: lea rcx, &idx
@@ -302,13 +321,18 @@ static bool Resolve() {
     a = Find(fModal, 0x300, P("49 8B CF E8 ?? ?? ?? ?? 48 8B 8D ?? ?? 00 00"));
     NEED(a, "modal: create");
     G.createModal = (CreateModalFn)Rel(a + 4);
-    // createModal compares the item with cfg->silver, then shows cfg->camp money (0xf0/0xf2 on 2.04,
-    // 0xc8/0xca on 2.05).
+    // createModal compares the item with cfg->silver, then shows cfg->camp money.
     {
         const Pat cp = P("48 8B 41 30 0F B7 88 ?? ?? 00 00 66 89 8D");
         uint8_t *s1 = Find((uint8_t *)G.createModal, 0x600, cp);
         uint8_t *s2 = s1 ? Find((uint8_t *)G.createModal, 0x600, cp, s1) : nullptr;
-        if (s1 && s2) {
+        if (namedTables) {
+            s1 = Find((uint8_t *)G.createModal, 0x600, P("48 8B 41 30 0F B7 90 ?? ?? 00 00 48 8B 0D"));
+            s2 = Find((uint8_t *)G.createModal, 0x600, P("48 8B 59 30 0F B7 9B ?? ?? 00 00 49 8B 8E 50 01 00 00"));
+            NEED(s1 && s2, "createModal: 2.06 config item offsets");
+            G.cfgSilver = *(uint32_t *)(s1 + 7);
+            G.cfgCamp = *(uint32_t *)(s2 + 7);
+        } else if (s1 && s2) {
             G.cfgSilver = *(uint32_t *)(s1 + 7);
             G.cfgCamp = *(uint32_t *)(s2 + 7);
         } else {
@@ -325,11 +349,19 @@ static bool Resolve() {
     G.handleRelease = (HandleReleaseFn)Rel(a + 18);
 
     // Client donate helper (FUN_1404cd190) and the VaryResource sender (FUN_140c91fc0).
-    if ((a = Find(fDonate, 0x100, P("E8 ?? ?? ?? ?? 48 8D 58 08 8B D6 E8 ?? ?? ?? ?? 4C 8D 40 08")))) G.factionInfo = (InfoFn)Rel(a + 12);
-    else if ((a = Find(fDonate, 0x100, P("E8 ?? ?? ?? ?? 48 8D 58 08 48 8D 8C 24 ?? ?? ?? ?? E8 ?? ?? ?? ?? 4C 8D 40 08"))))  // 2.05
-        G.factionInfo = (InfoFn)Rel(a + 18);
-    NEED(a, "donate: infos");
-    NEED(Rel(a + 1) == (uint8_t *)G.itemInfo, "donate: item info matches");
+    if (namedTables) {
+        a = Find(fDonate, 0x120, P("8B D3 48 8B 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8B 1D ?? ?? ?? ?? 48 85 C0 48 0F 45 D8 8B D6 48 8B 0D ?? ?? ?? ?? E8"));
+        NEED(a, "donate: item and faction tables");
+        NEED(Rel(a + 10) == (uint8_t *)G.itemInfo && Rel(a + 5) == (uint8_t *)G.itemTable, "donate: item info matches");
+        G.factionTable = (void **)Rel(a + 33);
+        G.factionInfo = (InfoFn)Rel(a + 38);
+    } else {
+        if ((a = Find(fDonate, 0x100, P("E8 ?? ?? ?? ?? 48 8D 58 08 8B D6 E8 ?? ?? ?? ?? 4C 8D 40 08")))) G.factionInfo = (InfoFn)Rel(a + 12);
+        else if ((a = Find(fDonate, 0x100, P("E8 ?? ?? ?? ?? 48 8D 58 08 48 8D 8C 24 ?? ?? ?? ?? E8 ?? ?? ?? ?? 4C 8D 40 08"))))
+            G.factionInfo = (InfoFn)Rel(a + 18);
+        NEED(a, "donate: infos");
+        NEED(Rel(a + 1) == (uint8_t *)G.itemInfo, "donate: item info matches");
+    }
     a = Find(fDonate, 0x120, P("48 8B 4D 10 E8"));
     if (!a) a = Find(fDonate, 0x120, P("48 8B 4E 10 E8"));  // 2.05: comp in rsi
     NEED(a, "donate: sender");
@@ -368,7 +400,12 @@ static bool Resolve() {
     NEED(Contains((uint8_t *)G.vary, 0x400, P("48 69 D0 C8 01 00 00 49 03 57 20 74 05 44 0F B7 72 18")), "server: faction table layout");
     if ((a = Find((uint8_t *)G.vary, 0x400, P("89 44 24 78 8B D0 E8 ?? ?? ?? ?? 4C 8B 75 D0 80 78 0E 03")))) a += 6;
     else if ((a = Find((uint8_t *)G.vary, 0x400, P("48 8D 4C 24 ?? E8 ?? ?? ?? ?? 4C 8B 75 ?? 80 78 0E 03")))) a += 5;  // 2.05: lea rcx, &idx
+    else if (namedTables && (a = Find((uint8_t *)G.vary, 0x400, P("8B D0 48 8B 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8B 0D ?? ?? ?? ?? 48 85 C0 48 0F 45 C8 4C 8B 75 ?? 80 79 0A 03")))) {
+        G.typeTable = (void **)Rel(a + 5);
+        a += 9;
+    }
     NEED(a, "server: faction type info");
+    NEED(!namedTables || G.typeTable, "server: faction type table");
     G.typeInfo = (InfoFn)Rel(a + 1);
 
     // NPC function menu (ButtonListPanel).
@@ -412,6 +449,12 @@ static bool Resolve() {
                          (void *)G.addButton, (void *)G.addExtraButton, (void *)G.locHash, (void *)G.locId};
     for (const void *f : fns)
         NEED((uint8_t *)f >= g_text.p && (uint8_t *)f < g_text.p + g_text.n, "resolved function outside the game code");
+    if (namedTables) {
+        const void *refs[] = { G.itemTable, G.factionTable, G.typeTable, G.textTable };
+        for (const void *ref : refs)
+            NEED((uint8_t *)ref >= g_data.p && (uint8_t *)ref < g_data.p + g_data.n - sizeof(void *),
+                 "resolved table outside the game data");
+    }
     Log("resolved: modal %p createModal %p send %p opcode %#x net %p rate flag %p cfg silver/camp +%#x/+%#x", fModal,
         G.createModal, G.send, G.opcode, G.netMgr, G.rateFlag, G.cfgSilver, G.cfgCamp);
     Log("server: vary %p site %p, itemValue site %p, record site %p", G.vary, G.siteVary, G.siteItemValue,
@@ -425,11 +468,15 @@ static bool Resolve() {
 // ---------------------------------------------------------------------------------------------
 // Game state helpers
 
-static uint8_t *Info(InfoFn f, uint32_t idx) { uint16_t i = (uint16_t)idx; return f(&i, idx); }
+static uint8_t *Info(InfoFn f, void **table, uint32_t idx) {
+    uint16_t i = (uint16_t)idx;
+    if (table && !*table) return nullptr;
+    return f(table ? *table : &i, idx);
+}
 
 static uint8_t *GameCfg() {
     uint8_t *tls0 = *(uint8_t **)__readgsqword(0x58);
-    void *root = tls0[0x1eb] ? *G.cfgRootB : *G.cfgRootA;
+    void *root = tls0[G.cfgTlsFlag] ? *G.cfgRootB : *G.cfgRootA;
     if (!root) return nullptr;
     uint8_t *p = *(uint8_t **)root;
     if (!p) return nullptr;
@@ -457,7 +504,7 @@ static const char *LocalizedText(const char *key) {
     G.locHash(&h, key);
     G.locId(&id, h);
     if (id == 0xffff) return nullptr;
-    uint8_t *obj = G.locText(&id, id);  // the game calls it with rcx pointing at the id
+    uint8_t *obj = Info(G.locText, G.textTable, id);
     void *o10 = obj ? *(void **)(obj + 0x10) : nullptr;
     if (!o10) return nullptr;
     return (const char *)((void *(__fastcall *)(void *, int))(*(void ***)o10)[1])(o10, 0);
@@ -485,10 +532,10 @@ static int CampFactionIdx() {
     for (uint32_t i = 0; table && i < n && i < 0x10000; i++) {
         uint16_t type = *(uint16_t *)(table + i * 0x1c8 + 0x18);
         if (type == 0xffff) continue;
-        uint8_t *t = Info(G.typeInfo, type);
-        uint8_t *f = Info(G.factionInfo, i);
-        if (!t || t[0xe] != 3 || !f || !f[0x10]) continue;
-        Log("camp faction candidate: idx %u key %u type %u", i, *(uint32_t *)(f + 8), type);
+        uint8_t *t = Info(G.typeInfo, G.typeTable, type);
+        uint8_t *f = Info(G.factionInfo, G.factionTable, i);
+        if (!t || t[G.typeTable ? 0xa : 0xe] != 3 || !f || !f[G.factionTable ? 0xc : 0x10]) continue;
+        Log("camp faction candidate: idx %u key %u type %u", i, *(uint32_t *)(f + (G.factionTable ? 0 : 8)), type);
         if (found < 0) found = (int)i;
         count++;
     }
@@ -538,6 +585,8 @@ static void *OpenWithdrawModal(uint8_t *panel, void *owner) {
     Log("withdraw: open, funds %lld rate %lld max %lld silver", (long long)funds, (long long)rate,
         (long long)maxSilver);
     if (maxSilver < 1) return nullptr;
+    uint8_t *silverInfo = Info(G.itemInfo, G.itemTable, silverIdx);
+    if (!silverInfo) return nullptr;
     void *root = CallV(panel, 0x118);
     void *view = root ? G.findView(root, G.modalViewName) : nullptr;
     if (!view) { Log("withdraw: ModalMessageView not found"); return nullptr; }
@@ -553,7 +602,7 @@ static void *OpenWithdrawModal(uint8_t *panel, void *owner) {
     char *t2 = *(char **)(cfg + 0xa38) ? *(char **)(cfg + 0xa38) : (char *)(cfg + 0x930);
     *(uint32_t *)(cfg + 0xa44) = 0xffffffff;
     G.setText(t2, *(uint32_t *)(cfg + 0xa40), text);
-    uint32_t silverKey = *(uint32_t *)(Info(G.itemInfo, silverIdx) + 8);
+    uint32_t silverKey = *(uint32_t *)(silverInfo + (G.itemTable ? 0 : 8));
     void *modal = G.createModal(owner, view, cfg, maxSilver, (int64_t)*G.minCount, silverKey, 0, 1,
                                 g_cfg.showCostPreview ? 1 : 0);
     G.cfgDtor(cfg);
@@ -572,8 +621,11 @@ static void SendWithdraw(int factionIdx, int64_t silver) {
     uint8_t peer = (uint8_t)(uintptr_t)CallV(sender, 0x168);
     void *net = *G.netMgr;
     if (peer == 0xff || !net || !*(uint8_t *)((uint8_t *)net + 0x112)) { Log("withdraw: not connected"); return; }
-    uint32_t factionKey = *(uint32_t *)(Info(G.factionInfo, factionIdx) + 8);
-    uint32_t campKey = *(uint32_t *)(Info(G.itemInfo, CampMoneyIdx()) + 8);
+    uint8_t *factionInfo = Info(G.factionInfo, G.factionTable, factionIdx);
+    uint8_t *campInfo = Info(G.itemInfo, G.itemTable, CampMoneyIdx());
+    if (!factionInfo || !campInfo) return;
+    uint32_t factionKey = *(uint32_t *)(factionInfo + (G.factionTable ? 0 : 8));
+    uint32_t campKey = *(uint32_t *)(campInfo + (G.itemTable ? 0 : 8));
     uint64_t funds = (uint64_t)(silver * Rate());
 
     uint8_t pkt[5 + 17];
